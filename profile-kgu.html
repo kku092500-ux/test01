@@ -1,0 +1,393 @@
+<title>경업의 시황판</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Libre+Franklin:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --cream: #F2EEE0;
+    --card: #FBF8EF;
+    --ink: #1C2A20;
+    --ink-soft: #56604F;
+    --gold: #9C7A1E;
+    --gold-soft: #C7A94A;
+    --gain: #2E7D53;
+    --loss: #A3452F;
+    --rule: #CDC2A0;
+    --shadow: rgba(28,42,32,0.10);
+    --tape-bg: #1C2A20;
+    --tape-ink: #E9E2C8;
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --cream: #131D17;
+      --card: #1A2620;
+      --ink: #ECE7D3;
+      --ink-soft: #ABA88F;
+      --gold: #D3AC46;
+      --gold-soft: #E7C976;
+      --gain: #52B084;
+      --loss: #CB7962;
+      --rule: #3A4739;
+      --shadow: rgba(0,0,0,0.4);
+      --tape-bg: #0D140F;
+      --tape-ink: #D9CC9C;
+    }
+  }
+  :root[data-theme="dark"]{
+    --cream: #131D17;
+    --card: #1A2620;
+    --ink: #ECE7D3;
+    --ink-soft: #ABA88F;
+    --gold: #D3AC46;
+    --gold-soft: #E7C976;
+    --gain: #52B084;
+    --loss: #CB7962;
+    --rule: #3A4739;
+    --shadow: rgba(0,0,0,0.4);
+    --tape-bg: #0D140F;
+    --tape-ink: #D9CC9C;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    background: var(--cream);
+    color: var(--ink);
+    font-family: "Libre Franklin", "Noto Sans KR", -apple-system, sans-serif;
+    line-height: 1.6;
+  }
+
+  .page{
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px 72px;
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 0 18px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .exchange-tag{
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+  }
+  .ticker-badge{
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 600;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    color: var(--cream);
+    background: var(--gold);
+    padding: 5px 11px;
+    border-radius: 3px;
+  }
+
+  /* ---------- ticker tape ---------- */
+  .tape-wrap{
+    background: var(--tape-bg);
+    overflow: hidden;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--rule);
+  }
+  .page > .tape-wrap{
+    margin: 0 calc(-1 * (100vw - 100%) / 2 - 24px) 0;
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+  }
+  .tape-track{
+    display: inline-flex;
+    gap: 40px;
+    padding: 9px 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--tape-ink);
+    animation: scroll-tape 34s linear infinite;
+  }
+  .tape-track span{ display: inline-flex; gap: 8px; align-items: center; white-space: nowrap; }
+  .tape-track .up{ color: var(--gain); }
+  .tape-track .down{ color: var(--loss); }
+  @keyframes scroll-tape{
+    from{ transform: translateX(0); }
+    to{ transform: translateX(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .tape-track{ animation: none; }
+  }
+
+  /* ---------- hero ---------- */
+  .hero{
+    position: relative;
+    padding: 56px 0 40px;
+    text-align: center;
+  }
+  .hero-chart{
+    position: absolute;
+    inset: 0 0 auto 0;
+    top: 4px;
+    width: 100%;
+    height: 130px;
+    opacity: 0.5;
+  }
+  .eyebrow{
+    position: relative;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.74rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 18px;
+  }
+  h1{
+    position: relative;
+    font-family: "Fraunces", serif;
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: clamp(2.6rem, 7vw, 4.2rem);
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .romanized{
+    position: relative;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.86rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 10px 0 22px;
+  }
+  .descriptor{
+    position: relative;
+    max-width: 30em;
+    margin: 0 auto;
+    color: var(--ink-soft);
+    font-size: 1.05rem;
+  }
+
+  hr.rule{
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 8px 0 40px;
+    position: relative;
+  }
+  hr.rule::after{
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: -3px;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+  }
+
+  /* ---------- profile ticket ---------- */
+  .ticket-title{
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 500;
+    margin: 0 0 18px;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+  }
+  .ticket-title span{ color: var(--rule); font-weight: 400; }
+
+  .ticket-list{
+    display: grid;
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px var(--shadow);
+  }
+  .ticket-row{
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) 1.4fr;
+    background: var(--card);
+    padding: 16px 20px;
+    align-items: baseline;
+    transition: background-color .15s ease;
+  }
+  .ticket-row:hover{ background: color-mix(in srgb, var(--card) 88%, var(--gold) 12%); }
+  .ticket-row dt{
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+  }
+  .ticket-row dt span{ display: block; opacity: 0.7; margin-top: 2px; }
+  .ticket-row dd{
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .ticket-row dd .sub{
+    display: inline-block;
+    margin-left: 10px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--ink-soft);
+  }
+
+  /* ---------- notes ---------- */
+  .notes-grid{
+    margin-top: 44px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .market-note{
+    padding: 22px 24px;
+    border-left: 3px solid var(--gold);
+    background: color-mix(in srgb, var(--card) 60%, transparent);
+    border-radius: 0 6px 6px 0;
+  }
+  .market-note p{ margin: 0 0 10px; color: var(--ink-soft); font-size: 0.98rem; }
+  .market-note p:last-child{ margin-bottom: 0; }
+  .market-note .fact-line{
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+    color: var(--ink);
+  }
+  .market-note .fact-line b{ color: var(--gold); font-weight: 600; }
+  @media (max-width: 640px){
+    .notes-grid{ grid-template-columns: 1fr; }
+  }
+
+  /* ---------- footer stamp ---------- */
+  .stamp{
+    margin-top: 56px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .seal{
+    flex: none;
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    border: 2px solid var(--loss);
+    color: var(--loss);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.35;
+    transform: rotate(-8deg);
+    opacity: 0.85;
+  }
+  .footnote{
+    margin: 0;
+    font-size: 0.86rem;
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 480px){
+    .ticket-row{ grid-template-columns: 1fr; gap: 4px; }
+  }
+</style>
+
+<div class="page">
+  <div class="masthead">
+    <div class="exchange-tag">KRX · SEOUL</div>
+    <div class="ticker-badge">KGU</div>
+  </div>
+
+  <div class="tape-wrap">
+    <div class="tape-track" aria-hidden="true">
+      <span class="up">KOSPI ▲</span>
+      <span>상한가 · 하한가 변동폭 ±30%</span>
+      <span class="down">KOSDAQ ▽</span>
+      <span>정규장 09:00–15:30 KST</span>
+      <span class="up">관심종목 ▲</span>
+      <span>동시호가 08:30–09:00</span>
+      <span class="down">환율 ▽</span>
+      <span>KOSPI ▲</span>
+      <span>상한가 · 하한가 변동폭 ±30%</span>
+      <span class="down">KOSDAQ ▽</span>
+      <span>정규장 09:00–15:30 KST</span>
+      <span class="up">관심종목 ▲</span>
+      <span>동시호가 08:30–09:00</span>
+      <span class="down">환율 ▽</span>
+    </div>
+  </div>
+
+  <main class="dossier">
+    <section class="hero">
+      <svg class="hero-chart" viewBox="0 0 600 130" preserveAspectRatio="none" aria-hidden="true">
+        <polyline points="0,20 85,90 90,90 95,55 180,55 185,55 190,80 275,80 280,80 285,40 370,40 375,40 380,65 465,65 470,65 475,25 560,25 565,25 570,45 600,45"
+          fill="none" stroke="var(--rule)" stroke-width="1" />
+        <path d="M0,100 C70,92 90,50 150,66 C210,82 240,26 300,42 C360,58 390,12 450,28 C510,44 540,8 600,18"
+          fill="none" stroke="var(--gold-soft)" stroke-width="2" />
+      </svg>
+      <p class="eyebrow">개인 프로필 · Personal Profile</p>
+      <h1>권경업</h1>
+      <p class="romanized">Kwon Kyungup</p>
+      <p class="descriptor">증권시장의 시황판과 바둑판, 두 개의 '판'을 읽는 것을 즐기는 대한민국의 개인 투자자.</p>
+    </section>
+
+    <hr class="rule" />
+
+    <section>
+      <h2 class="ticket-title">프로필 시트 <span>Profile Sheet</span></h2>
+      <dl class="ticket-list">
+        <div class="ticket-row">
+          <dt>이름<span>Name</span></dt>
+          <dd>권경업 <span class="sub">Kyungup Kwon</span></dd>
+        </div>
+        <div class="ticket-row">
+          <dt>국적<span>Nationality</span></dt>
+          <dd>대한민국 <span class="sub">Republic of Korea</span></dd>
+        </div>
+        <div class="ticket-row">
+          <dt>나이<span>Age</span></dt>
+          <dd>69 <span class="sub">세 · YRS</span></dd>
+        </div>
+        <div class="ticket-row">
+          <dt>관심 분야<span>Focus</span></dt>
+          <dd>증권시장 · 바둑 <span class="sub">Stock Market · Baduk</span></dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="notes-grid">
+      <div class="market-note">
+        <p>한국거래소(KRX)의 정규 매매시간은 오전 9시부터 오후 3시 30분까지이며, 개별 종목의 하루 등락폭은 상하 30%로 제한된다 — 시황판 앞에서 하루를 시작하는 이들에게는 익숙한 리듬이다.</p>
+        <p class="fact-line">SESSION <b>09:00–15:30 KST</b> · LIMIT <b>±30%</b> · PRE-OPEN <b>08:30–09:00</b></p>
+      </div>
+      <div class="market-note">
+        <p>바둑판은 가로세로 각 19줄, 361개의 교차점으로 이루어진다. 먼저 두는 흑이 유리한 만큼 백에게는 덤 6.5집을 주어 균형을 맞춘다 — 두 개의 판 모두, 몇 수 앞을 내다보는 사람에게 유리하다.</p>
+        <p class="fact-line">BOARD <b>19×19</b> · POINTS <b>361</b> · KOMI <b>6.5</b></p>
+      </div>
+    </section>
+
+    <footer class="stamp">
+      <div class="seal">CLOSE<br>15:30<br>KST</div>
+      <p class="footnote">권경업님의 이름, 국적, 나이, 관심 분야를 담은 개인 프로필 페이지입니다.</p>
+    </footer>
+  </main>
+</div>
