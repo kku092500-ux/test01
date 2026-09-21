@@ -253,11 +253,12 @@
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tabs button[aria-selected="true"] { background: var(--accent); color: #14213d; } }
   .field { display: grid; gap: .35rem; margin-bottom: 1rem; }
   .field label { font-weight: 700; font-size: .95rem; }
-  .field input {
+  .field input, .field textarea {
     font: inherit; padding: .75rem .9rem; border-radius: 12px; border: 1.5px solid var(--line);
     background: var(--bg); color: var(--ink); width: 100%;
   }
-  .field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .field textarea { min-height: 10rem; resize: vertical; }
+  .field input:focus, .field textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
   .field small { color: var(--ink-soft); }
   .submit { width: 100%; font: inherit; font-weight: 700; padding: .85rem; border: 0; border-radius: 999px; cursor: pointer; background: #fca311; color: #14213d; }
   .submit:disabled { opacity: .6; cursor: wait; }
@@ -267,6 +268,32 @@
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .msg.ok { color: #52b084; } }
   :root[data-theme="dark"] .msg.ok { color: #52b084; }
   @media (max-width: 640px) { .user-chip span.hello { display: none; } .user-chip { max-width: 8rem; } }
+
+  /* ---------- 게시판 ---------- */
+  .board-bar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; color: var(--ink-soft); }
+  .btn-solid { font: inherit; font-weight: 700; cursor: pointer; padding: .6rem 1.4rem; border: 0; border-radius: 999px; background: #fca311; color: #14213d; }
+  .btn-solid:hover { filter: brightness(1.06); }
+  .board-list { display: grid; gap: .75rem; }
+  .post { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .post summary {
+    list-style: none; cursor: pointer; padding: 1.05rem 1.3rem; border-radius: var(--radius);
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .25rem 1rem;
+  }
+  .post summary::-webkit-details-marker { display: none; }
+  .post summary:hover .p-title { color: var(--accent); }
+  .post[open] summary { border-bottom: 1px dashed var(--line); border-radius: var(--radius) var(--radius) 0 0; }
+  .p-title { font-weight: 700; overflow-wrap: anywhere; }
+  .p-meta { color: var(--ink-soft); font-size: .9rem; white-space: nowrap; }
+  .p-body { padding: 1.1rem 1.3rem 1.2rem; }
+  .p-content { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .p-actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem; }
+  .p-actions button { font: inherit; font-size: .9rem; cursor: pointer; padding: .35rem .95rem; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+  .p-actions button:hover { border-color: var(--accent); }
+  .p-actions button.danger { color: var(--up); }
+  .board-empty { text-align: center; color: var(--ink-soft); padding: 2.2rem 1rem; }
+  .more { display: block; margin: 1.3rem auto 0; font: inherit; font-weight: 700; cursor: pointer; padding: .65rem 1.6rem; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); }
+  .more:hover { border-color: var(--accent); }
+  #postDialog { width: min(640px, calc(100% - 2rem)); }
 
   /* Scroll reveal (JS 가 켜져 있을 때만) */
   .js .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
@@ -304,6 +331,7 @@
       <a href="#specialty">특기</a>
       <a href="#hobby">취미</a>
       <a href="#vibe">바이브코딩</a>
+      <a href="#board">게시판</a>
     </nav>
     <div class="top-actions">
       <span class="user-chip" data-when="in"><span class="hello">환영합니다</span> <b id="userEmail"></b></span>
@@ -457,6 +485,24 @@
     </div>
   </section>
 
+  <!-- ===== 게시판 ===== -->
+  <section class="block" id="board">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="tag">BOARD</p>
+        <h2>게시판</h2>
+        <p>방문해 주셔서 감사합니다. 안부나 이야기를 자유롭게 남겨 주세요. 글쓰기는 로그인 후 가능합니다.</p>
+      </div>
+      <div class="board-bar">
+        <span id="boardCount" aria-live="polite"></span>
+        <button class="btn-solid" id="newPostBtn" type="button">✏️ 글쓰기</button>
+      </div>
+      <div class="board-list" id="boardList"></div>
+      <p class="msg" id="boardMsg" role="status" aria-live="polite"></p>
+      <button class="more" id="moreBtn" type="button" hidden>더 보기</button>
+    </div>
+  </section>
+
 </main>
 
 <footer>
@@ -501,6 +547,28 @@
   </div>
 </dialog>
 
+<!-- ===== 글쓰기 창 ===== -->
+<dialog class="auth" id="postDialog" aria-labelledby="postDlgTitle">
+  <div class="auth-body">
+    <div class="auth-head">
+      <h2 id="postDlgTitle">글쓰기</h2>
+      <button class="auth-close" type="button" id="postClose" aria-label="닫기">&times;</button>
+    </div>
+    <form id="postForm" novalidate>
+      <div class="field">
+        <label for="postTitle">제목</label>
+        <input id="postTitle" name="title" type="text" maxlength="100" required placeholder="100자 이내">
+      </div>
+      <div class="field">
+        <label for="postContent">내용</label>
+        <textarea id="postContent" name="content" maxlength="5000" required placeholder="5000자 이내"></textarea>
+      </div>
+      <button class="submit" id="postSubmit" type="submit">등록</button>
+      <p class="msg" id="postMsg" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</dialog>
+
 <!-- Supabase 로그인 라이브러리 (버전 고정 + 무결성 검사) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"
         integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"
@@ -524,6 +592,7 @@
     var pw = document.getElementById('password');
     var mode = 'in';   // 'in' 로그인 | 'up' 회원가입
     var sb = null;
+    var boardUserId = null;   // 로그인한 사용자 id (게시판에서 내 글 판별용)
 
     root.classList.add('signed-out');
     try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch (e) { sb = null; }
@@ -546,6 +615,8 @@
       root.classList.toggle('signed-in', !!user);
       root.classList.toggle('signed-out', !user);
       document.getElementById('userEmail').textContent = user ? user.email : '';
+      var uid = user ? user.id : null;
+      if (uid !== boardUserId) { boardUserId = uid; renderBoard(); }   // 내 글에만 수정·삭제 버튼 표시
     }
 
     function korError(err) {
@@ -614,6 +685,172 @@
     document.getElementById('logoutBtn').addEventListener('click', async function () {
       if (sb) { try { await sb.auth.signOut(); } catch (e) {} }
     });
+
+    /* ---------- 게시판 ---------- */
+    var PAGE_SIZE = 10;
+    var POST_COLS = 'id,user_id,author_name,title,content,created_at,updated_at';
+    var posts = [];          // 화면에 불러온 글 (최신순)
+    var hasMore = false;
+    var boardReady = false;  // 첫 목록 조회가 끝났는지
+    var editingId = null;    // 수정 중인 글 id (새 글이면 null)
+
+    var listEl = document.getElementById('boardList');
+    var boardMsg = document.getElementById('boardMsg');
+    var moreBtn = document.getElementById('moreBtn');
+    var postDlg = document.getElementById('postDialog');
+    var postForm = document.getElementById('postForm');
+    var postMsg = document.getElementById('postMsg');
+    var postSubmit = document.getElementById('postSubmit');
+    var postTitleEl = document.getElementById('postTitle');
+    var postContentEl = document.getElementById('postContent');
+
+    function pad(n) { return n < 10 ? '0' + n : String(n); }
+    function fmtDate(iso) {
+      var d = new Date(iso);
+      return d.getFullYear() + '.' + pad(d.getMonth() + 1) + '.' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    }
+    function setBoardMsg(text, kind) { boardMsg.textContent = text || ''; boardMsg.className = 'msg' + (kind ? ' ' + kind : ''); }
+    function setPostMsg(text, kind) { postMsg.textContent = text || ''; postMsg.className = 'msg' + (kind ? ' ' + kind : ''); }
+
+    function boardError(err) {
+      var code = err && err.code, m = (err && err.message || '').toLowerCase();
+      if (code === 'PGRST205' || code === '42P01' || m.indexOf('schema cache') > -1) return '게시판을 준비 중입니다.';
+      if (code === '42501' || m.indexOf('row-level security') > -1) return '권한이 없습니다. 로그인 상태를 확인해 주세요.';
+      if (m.indexOf('failed to fetch') > -1 || m.indexOf('network') > -1) return '네트워크 연결을 확인해 주세요.';
+      return '처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+    }
+
+    function el(tag, cls, text) {
+      var n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text != null) n.textContent = text;    // 항상 textContent: 글 내용이 HTML 로 해석되지 않게 함
+      return n;
+    }
+
+    function renderBoard() {
+      var open = {};
+      Array.prototype.forEach.call(listEl.querySelectorAll('details[open]'), function (d) { open[d.dataset.id] = true; });
+      listEl.textContent = '';
+
+      if (boardReady && !posts.length) listEl.appendChild(el('p', 'board-empty', '아직 글이 없습니다. 첫 글을 남겨 보세요!'));
+
+      posts.forEach(function (p) {
+        var d = el('details', 'post');
+        d.dataset.id = p.id;
+        if (open[p.id]) d.open = true;
+
+        var sum = el('summary');
+        sum.appendChild(el('span', 'p-title', p.title));
+        var edited = p.updated_at && p.updated_at !== p.created_at && new Date(p.updated_at) - new Date(p.created_at) > 1000;
+        sum.appendChild(el('span', 'p-meta', p.author_name + ' · ' + fmtDate(p.created_at) + (edited ? ' (수정됨)' : '')));
+        d.appendChild(sum);
+
+        var body = el('div', 'p-body');
+        body.appendChild(el('p', 'p-content', p.content));
+        if (boardUserId && p.user_id === boardUserId) {
+          var act = el('div', 'p-actions');
+          var eb = el('button', null, '수정'); eb.type = 'button';
+          eb.addEventListener('click', function () { openPostDlg(p); });
+          var db = el('button', 'danger', '삭제'); db.type = 'button';
+          db.addEventListener('click', function () { deletePost(p); });
+          act.appendChild(eb); act.appendChild(db);
+          body.appendChild(act);
+        }
+        d.appendChild(body);
+        listEl.appendChild(d);
+      });
+
+      document.getElementById('boardCount').textContent = boardReady && posts.length ? '글 ' + posts.length + '개' + (hasMore ? ' 이상' : '') : '';
+      moreBtn.hidden = !hasMore;
+    }
+
+    // count 개를 처음(최신)부터 다시 불러옴 — 글 등록·수정·삭제 뒤 목록을 서버와 맞출 때 사용
+    async function reloadPosts(count) {
+      if (!sb) { setBoardMsg('게시판 서비스에 연결할 수 없습니다. 페이지를 새로고침해 주세요.', 'err'); return; }
+      var n = Math.max(count || PAGE_SIZE, PAGE_SIZE);
+      var r = await sb.from('posts').select(POST_COLS).order('created_at', { ascending: false }).range(0, n - 1);
+      if (r.error) { setBoardMsg(boardError(r.error), 'err'); boardReady = true; renderBoard(); return; }
+      posts = r.data; hasMore = r.data.length === n; boardReady = true;
+      setBoardMsg(''); renderBoard();
+    }
+
+    async function loadMore() {
+      if (!sb) return;
+      moreBtn.disabled = true;
+      try {
+        var from = posts.length;
+        var r = await sb.from('posts').select(POST_COLS).order('created_at', { ascending: false }).range(from, from + PAGE_SIZE - 1);
+        if (r.error) throw r.error;
+        var seen = {}; posts.forEach(function (p) { seen[p.id] = true; });
+        r.data.forEach(function (p) { if (!seen[p.id]) posts.push(p); });
+        hasMore = r.data.length === PAGE_SIZE;
+        setBoardMsg(''); renderBoard();
+      } catch (err) {
+        setBoardMsg(boardError(err), 'err');
+      } finally {
+        moreBtn.disabled = false;
+      }
+    }
+
+    function openPostDlg(post) {
+      editingId = post ? post.id : null;
+      postForm.reset();
+      if (post) { postTitleEl.value = post.title; postContentEl.value = post.content; }
+      document.getElementById('postDlgTitle').textContent = post ? '글 수정' : '글쓰기';
+      postSubmit.textContent = post ? '수정 완료' : '등록';
+      setPostMsg('');
+      if (postDlg.showModal) postDlg.showModal(); else postDlg.setAttribute('open', '');
+      postTitleEl.focus();
+    }
+    function closePostDlg() { if (postDlg.close) postDlg.close(); else postDlg.removeAttribute('open'); }
+
+    document.getElementById('newPostBtn').addEventListener('click', function () {
+      if (!boardUserId) { openDlg('in'); setMsg('글을 쓰려면 먼저 로그인해 주세요.'); return; }
+      openPostDlg(null);
+    });
+    document.getElementById('postClose').addEventListener('click', closePostDlg);
+    moreBtn.addEventListener('click', loadMore);
+
+    postForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      if (!sb || !boardUserId) { setPostMsg('로그인이 필요합니다.', 'err'); return; }
+      var title = postTitleEl.value.trim();
+      var content = postContentEl.value.trim();
+      if (!title) { setPostMsg('제목을 입력해 주세요.', 'err'); return; }
+      if (!content) { setPostMsg('내용을 입력해 주세요.', 'err'); return; }
+
+      postSubmit.disabled = true; setPostMsg('저장 중…');
+      try {
+        var r;
+        if (editingId) {
+          r = await sb.from('posts').update({ title: title, content: content }).eq('id', editingId).select('id');
+          if (!r.error && (!r.data || !r.data.length)) throw { code: '42501' };   // 내 글이 아니면 0건 수정
+        } else {
+          r = await sb.from('posts').insert({ title: title, content: content });
+        }
+        if (r.error) throw r.error;
+        closePostDlg();
+        await reloadPosts(editingId ? posts.length : PAGE_SIZE);
+      } catch (err) {
+        setPostMsg(boardError(err), 'err');
+      } finally {
+        postSubmit.disabled = false;
+      }
+    });
+
+    async function deletePost(p) {
+      if (!confirm('이 글을 삭제할까요?\n삭제한 글은 되돌릴 수 없습니다.')) return;
+      try {
+        var r = await sb.from('posts').delete().eq('id', p.id).select('id');
+        if (r.error) throw r.error;
+        if (!r.data || !r.data.length) throw { code: '42501' };
+        await reloadPosts(Math.max(posts.length - 1, PAGE_SIZE));
+      } catch (err) {
+        setBoardMsg(boardError(err), 'err');
+      }
+    }
+
+    reloadPosts(PAGE_SIZE);
 
     if (sb) {
       sb.auth.onAuthStateChange(function (_event, session) { render(session); });
