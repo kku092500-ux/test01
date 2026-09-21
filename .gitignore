@@ -1,0 +1,4 @@
+# 비밀 키가 들어 있는 파일은 절대 GitHub에 올리지 않습니다
+.env
+.env.*
+!.env.example

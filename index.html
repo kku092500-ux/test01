@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" class="signed-out">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -221,6 +221,53 @@
   footer p { margin: 0; font-size: .95rem; }
   footer a { color: #ffd58a; }
 
+  /* ---------- 로그인 ---------- */
+  .top-actions { display: flex; align-items: center; gap: .5rem; flex: none; }
+  .auth-btn {
+    font: inherit; font-weight: 700; font-size: .95rem; cursor: pointer;
+    padding: .5rem 1.1rem; border-radius: 999px; border: 0;
+    background: var(--brand); color: var(--brand-ink); white-space: nowrap;
+  }
+  .auth-btn:hover { filter: brightness(1.2); }
+  :root[data-theme="dark"] .auth-btn { background: var(--accent); color: #14213d; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .auth-btn { background: var(--accent); color: #14213d; } }
+  .user-chip { display: none; align-items: center; gap: .5rem; font-size: .92rem; color: var(--ink-soft); max-width: 15rem; }
+  .user-chip b { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .signed-in .user-chip { display: inline-flex; }
+  .signed-in [data-when="out"], .signed-out [data-when="in"] { display: none; }
+
+  dialog.auth {
+    width: min(420px, calc(100% - 2rem)); padding: 0; border: 1px solid var(--line); border-radius: 22px;
+    background: var(--surface); color: var(--ink); box-shadow: 0 24px 60px rgba(0,0,0,.35);
+  }
+  dialog.auth::backdrop { background: rgba(10,15,29,.6); backdrop-filter: blur(3px); }
+  .auth-body { padding: 1.6rem 1.6rem 1.8rem; }
+  .auth-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .auth-head h2 { margin: 0; font-size: 1.4rem; letter-spacing: -.02em; }
+  .auth-close { border: 0; background: transparent; color: var(--ink-soft); font-size: 1.6rem; line-height: 1; cursor: pointer; padding: .2rem .5rem; border-radius: 8px; }
+  .auth-close:hover { background: var(--accent-soft); color: var(--ink); }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: .3rem; padding: .3rem; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; margin-bottom: 1.2rem; }
+  .tabs button { font: inherit; font-weight: 700; border: 0; background: transparent; color: var(--ink-soft); padding: .55rem; border-radius: 999px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: var(--brand); color: var(--brand-ink); }
+  :root[data-theme="dark"] .tabs button[aria-selected="true"] { background: var(--accent); color: #14213d; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tabs button[aria-selected="true"] { background: var(--accent); color: #14213d; } }
+  .field { display: grid; gap: .35rem; margin-bottom: 1rem; }
+  .field label { font-weight: 700; font-size: .95rem; }
+  .field input {
+    font: inherit; padding: .75rem .9rem; border-radius: 12px; border: 1.5px solid var(--line);
+    background: var(--bg); color: var(--ink); width: 100%;
+  }
+  .field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .field small { color: var(--ink-soft); }
+  .submit { width: 100%; font: inherit; font-weight: 700; padding: .85rem; border: 0; border-radius: 999px; cursor: pointer; background: #fca311; color: #14213d; }
+  .submit:disabled { opacity: .6; cursor: wait; }
+  .msg { min-height: 1.5em; margin: .9rem 0 0; font-size: .95rem; }
+  .msg.err { color: var(--up); }
+  .msg.ok { color: #2e7d53; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .msg.ok { color: #52b084; } }
+  :root[data-theme="dark"] .msg.ok { color: #52b084; }
+  @media (max-width: 640px) { .user-chip span.hello { display: none; } .user-chip { max-width: 8rem; } }
+
   /* Scroll reveal (JS 가 켜져 있을 때만) */
   .js .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
   .js .reveal.in { opacity: 1; transform: none; }
@@ -258,7 +305,12 @@
       <a href="#hobby">취미</a>
       <a href="#vibe">바이브코딩</a>
     </nav>
-    <button class="theme-btn" id="themeBtn" type="button" aria-label="화면 밝기 전환">◐</button>
+    <div class="top-actions">
+      <span class="user-chip" data-when="in"><span class="hello">환영합니다</span> <b id="userEmail"></b></span>
+      <button class="auth-btn" id="loginBtn" type="button" data-when="out">로그인</button>
+      <button class="auth-btn" id="logoutBtn" type="button" data-when="in">로그아웃</button>
+      <button class="theme-btn" id="themeBtn" type="button" aria-label="화면 밝기 전환">◐</button>
+    </div>
   </div>
 </header>
 
@@ -422,10 +474,151 @@
   -->
 </footer>
 
+<!-- ===== 로그인 창 ===== -->
+<dialog class="auth" id="authDialog" aria-labelledby="authTitle">
+  <div class="auth-body">
+    <div class="auth-head">
+      <h2 id="authTitle">로그인</h2>
+      <button class="auth-close" type="button" id="authClose" aria-label="닫기">&times;</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tabIn" aria-selected="true">로그인</button>
+      <button type="button" role="tab" id="tabUp" aria-selected="false">회원가입</button>
+    </div>
+    <form id="authForm" novalidate>
+      <div class="field">
+        <label for="email">이메일</label>
+        <input id="email" name="email" type="email" autocomplete="email" inputmode="email" required placeholder="name@example.com">
+      </div>
+      <div class="field">
+        <label for="password">비밀번호</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required minlength="6" placeholder="6자 이상">
+        <small id="pwHint" hidden>6자 이상으로 입력해 주세요.</small>
+      </div>
+      <button class="submit" id="submitBtn" type="submit">로그인</button>
+      <p class="msg" id="authMsg" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</dialog>
+
+<!-- Supabase 로그인 라이브러리 (버전 고정 + 무결성 검사) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"
+        integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"
+        crossorigin="anonymous"></script>
 <script>
+  /* ===== Supabase 설정 =====
+     여기에는 공개용 anon 키만 넣습니다 (브라우저에 노출되어도 되는 키).
+     service_role 키는 절대 이 파일에 넣지 마세요. */
+  var SUPABASE_URL = 'https://xauxyqhcqxylmtbfrimh.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhdXh5cWhjcXh5bG10YmZyaW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4NDU2NjgsImV4cCI6MjEwNDQyMTY2OH0.vIv3Fl9AqdotjxbuTP_5ONUlA_j78nOaV12tDZMYDrQ';
+
   (function () {
     var root = document.documentElement;
     root.classList.add('js');
+
+    /* ---------- 로그인 ---------- */
+    var dlg = document.getElementById('authDialog');
+    var form = document.getElementById('authForm');
+    var msg = document.getElementById('authMsg');
+    var submitBtn = document.getElementById('submitBtn');
+    var pw = document.getElementById('password');
+    var mode = 'in';   // 'in' 로그인 | 'up' 회원가입
+    var sb = null;
+
+    root.classList.add('signed-out');
+    try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch (e) { sb = null; }
+
+    function setMsg(text, kind) { msg.textContent = text || ''; msg.className = 'msg' + (kind ? ' ' + kind : ''); }
+
+    function setMode(m) {
+      mode = m;
+      var up = m === 'up';
+      document.getElementById('tabIn').setAttribute('aria-selected', String(!up));
+      document.getElementById('tabUp').setAttribute('aria-selected', String(up));
+      document.getElementById('authTitle').textContent = up ? '회원가입' : '로그인';
+      submitBtn.textContent = up ? '가입하기' : '로그인';
+      pw.setAttribute('autocomplete', up ? 'new-password' : 'current-password');
+      setMsg('');
+    }
+
+    function render(session) {
+      var user = session && session.user;
+      root.classList.toggle('signed-in', !!user);
+      root.classList.toggle('signed-out', !user);
+      document.getElementById('userEmail').textContent = user ? user.email : '';
+    }
+
+    function korError(err) {
+      var m = (err && err.message || '').toLowerCase();
+      if (m.indexOf('invalid login') > -1) return '이메일 또는 비밀번호가 올바르지 않습니다.';
+      if (m.indexOf('email not confirmed') > -1) return '이메일 인증이 아직 완료되지 않았습니다. 받은 편지함의 인증 메일을 확인해 주세요.';
+      if (m.indexOf('already registered') > -1) return '이미 가입된 이메일입니다. 로그인해 주세요.';
+      if (m.indexOf('password') > -1 && m.indexOf('6') > -1) return '비밀번호는 6자 이상이어야 합니다.';
+      if (m.indexOf('valid email') > -1 || m.indexOf('invalid email') > -1) return '올바른 이메일 주소를 입력해 주세요.';
+      if (m.indexOf('rate limit') > -1 || m.indexOf('too many') > -1) return '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.';
+      if (m.indexOf('failed to fetch') > -1 || m.indexOf('network') > -1) return '네트워크 연결을 확인해 주세요.';
+      return '처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+    }
+
+    function openDlg(m) {
+      setMode(m || 'in'); form.reset();
+      if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
+      document.getElementById('email').focus();
+    }
+    function closeDlg() { if (dlg.close) dlg.close(); else dlg.removeAttribute('open'); }
+
+    document.getElementById('loginBtn').addEventListener('click', function () { openDlg('in'); });
+    document.getElementById('authClose').addEventListener('click', closeDlg);
+    document.getElementById('tabIn').addEventListener('click', function () { setMode('in'); });
+    document.getElementById('tabUp').addEventListener('click', function () { setMode('up'); });
+    dlg.addEventListener('click', function (e) { if (e.target === dlg) closeDlg(); });   // 바깥 클릭 시 닫기
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      if (!sb) { setMsg('로그인 서비스에 연결할 수 없습니다. 페이지를 새로고침해 주세요.', 'err'); return; }
+      var email = form.email.value.trim();
+      var password = form.password.value;
+      if (!email || email.indexOf('@') < 1) { setMsg('올바른 이메일 주소를 입력해 주세요.', 'err'); return; }
+      document.getElementById('pwHint').hidden = password.length >= 6;
+      if (password.length < 6) { setMsg('비밀번호는 6자 이상이어야 합니다.', 'err'); return; }
+
+      submitBtn.disabled = true; setMsg('처리 중…');
+      try {
+        if (mode === 'in') {
+          var r = await sb.auth.signInWithPassword({ email: email, password: password });
+          if (r.error) throw r.error;
+          closeDlg();
+        } else {
+          var s = await sb.auth.signUp({
+            email: email, password: password,
+            options: { emailRedirectTo: location.origin + location.pathname }
+          });
+          if (s.error) throw s.error;
+          if (s.data.session) { closeDlg(); }           // 이메일 인증을 끈 경우: 바로 로그인됨
+          else {                                          // 이메일 인증을 켠 경우
+            // 이미 가입된 이메일은 보안상 identities 가 비어 돌아옵니다
+            if (s.data.user && s.data.user.identities && s.data.user.identities.length === 0) {
+              setMsg('이미 가입된 이메일입니다. 로그인해 주세요.', 'err');
+            } else {
+              setMsg('인증 메일을 보냈습니다. 메일의 링크를 누른 뒤 로그인해 주세요.', 'ok');
+            }
+          }
+        }
+      } catch (err) {
+        setMsg(korError(err), 'err');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async function () {
+      if (sb) { try { await sb.auth.signOut(); } catch (e) {} }
+    });
+
+    if (sb) {
+      sb.auth.onAuthStateChange(function (_event, session) { render(session); });
+      sb.auth.getSession().then(function (r) { render(r.data && r.data.session); });
+    }
 
     // 올해 연도
     var y = document.getElementById('year');
